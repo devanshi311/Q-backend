@@ -1,10 +1,14 @@
 import express from "express";
 import dotenv from "dotenv";
 import { sql } from "./config/db.js";
+import rateLimiter from "./middleware/rateLimiter.js";
 
 dotenv.config();
 
 const app = express();
+
+//middleware
+app.use(rateLimiter);
 app.use(express.json());
 
 // app.use((req, res, next) => {
@@ -41,21 +45,6 @@ app.get("/",(req,res) =>{
     res.send("IT's working..")
 })
 
-app.get("/api/transactions/:userId", async (req, res) => {
-    
-    try {
-        const { userId } = req.params
-        const transactions = await sql`
-            SELECT * FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC
-        `;
-        // console.log("Transactions fetched:", transactions);
-        res.status(200).json(transactions);
-    } catch (error) {
-        console.error("Error fetching transactions:", error);
-        res.status(500).json({message: "Internal server error"});
-    }
-});
-
 
 app.post("/api/transactions", async (req ,res) => {
     try {
@@ -76,6 +65,21 @@ app.post("/api/transactions", async (req ,res) => {
         res.status(500).json({message: "Internal server error"});        
     }
 })
+
+app.get("/api/transactions/:userId", async (req, res) => {
+    
+    try {
+        const { userId } = req.params
+        const transactions = await sql`
+            SELECT * FROM transactions WHERE user_id = ${userId} ORDER BY created_at DESC
+        `;
+        // console.log("Transactions fetched:", transactions);
+        res.status(200).json(transactions);
+    } catch (error) {
+        console.error("Error fetching transactions:", error);
+        res.status(500).json({message: "Internal server error"});
+    }
+});
 
 app.delete("/api/transactions/:id", async (req, res) => {
     try {
